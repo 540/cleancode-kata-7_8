@@ -21,40 +21,19 @@ class UserManager
         $this->client = new Client(['base_uri' => 'https://jsonplaceholder.typicode.com']);
     }
 
-    public function getUser(string $location, int $id): array
+    public function getUser(string $location, int $id): User
     {
         return $this->getUserRepository($location)->findOneById($id);
     }
 
-    public function getAllUsers(string $location): array
+    public function getAllUsers(string $location): UserCollection
     {
         return $this->getUserRepository($location)->findAll();
     }
 
-    public function getUsersWithNameContaining(string $location, string $text): array
+    public function getUsersWithNameContaining(string $location, string $text): UserCollection
     {
-        $users = $this->getAllUsers($location);
-
-        return $this->filterUsersNameContaining($users, $text);
-    }
-
-    /**
-     * @param array  $users
-     *
-     * @param string $text
-     *
-     * @return array
-     */
-    private function filterUsersNameContaining($users, string $text): array
-    {
-        return array_values(
-            array_filter(
-                $users,
-                function ($user) use ($text) {
-                    return strpos($user['name'], $text) !== false;
-                }
-            )
-        );
+        return $this->getAllUsers($location)->newWithNameContaining($text);
     }
 
     /**

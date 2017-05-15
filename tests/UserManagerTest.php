@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deg540\CleanCodeKata7_8\Test;
 
+use Deg540\CleanCodeKata7_8\User;
 use Deg540\CleanCodeKata7_8\UserManager;
 use Exception;
 use GuzzleHttp\Client;
@@ -37,7 +38,7 @@ final class UserManagerTest extends TestCase
     public function get_single_user1_locally()
     {
         $this->assertEquals(
-            ['id' => 1, 'name' => 'Leanne Graham'],
+            $this->buildUser(1, 'Leanne Graham'),
             $this->userManager->getUser(UserManager::LOCAL, 1)
         );
     }
@@ -48,7 +49,7 @@ final class UserManagerTest extends TestCase
     public function get_single_user1_remotely()
     {
         $this->assertEquals(
-            ['id' => 1, 'name' => 'Leanne Graham'],
+            $this->buildUser(1, 'Leanne Graham'),
             $this->userManager->getUser(UserManager::REMOTE, 1)
         );
     }
@@ -59,7 +60,7 @@ final class UserManagerTest extends TestCase
     public function get_single_user2_locally()
     {
         $this->assertEquals(
-            ['id' => 2, 'name' => 'Ervin Howell'],
+            $this->buildUser(2, 'Ervin Howell'),
             $this->userManager->getUser(UserManager::LOCAL, 2)
         );
     }
@@ -70,7 +71,7 @@ final class UserManagerTest extends TestCase
     public function get_single_user2_remotely()
     {
         $this->assertEquals(
-            ['id' => 2, 'name' => 'Ervin Howell'],
+            $this->buildUser(2, 'Ervin Howell'),
             $this->userManager->getUser(UserManager::REMOTE, 2)
         );
     }
@@ -101,8 +102,8 @@ final class UserManagerTest extends TestCase
         $users = $this->userManager->getAllUsers(UserManager::LOCAL);
 
         $this->assertCount(10, $users);
-        $this->assertEquals(['id' => 1, 'name' => 'Leanne Graham'], $users[0]);
-        $this->assertEquals(['id' => 10, 'name' => 'Clementina DuBuque'], $users[9]);
+        $this->assertEquals($this->buildUser(1, 'Leanne Graham'), $users->getAtPosition(0));
+        $this->assertEquals($this->buildUser(10, 'Clementina DuBuque'), $users->getAtPosition(9));
     }
 
     /**
@@ -113,8 +114,8 @@ final class UserManagerTest extends TestCase
         $users = $this->userManager->getAllUsers(UserManager::REMOTE);
 
         $this->assertCount(10, $users);
-        $this->assertEquals(['id' => 1, 'name' => 'Leanne Graham'], $users[0]);
-        $this->assertEquals(['id' => 10, 'name' => 'Clementina DuBuque'], $users[9]);
+        $this->assertEquals($this->buildUser(1, 'Leanne Graham'), $users->getAtPosition(0));
+        $this->assertEquals($this->buildUser(10, 'Clementina DuBuque'), $users->getAtPosition(9));
     }
 
     /**
@@ -124,7 +125,7 @@ final class UserManagerTest extends TestCase
     {
         $this->mockContextToFetchEmptyUserList();
 
-        $this->assertEmpty($this->userManager->getAllUsers(UserManager::LOCAL));
+        $this->assertTrue($this->userManager->getAllUsers(UserManager::LOCAL)->isEmpty());
     }
 
     /**
@@ -134,7 +135,7 @@ final class UserManagerTest extends TestCase
     {
         $this->mockContextToFetchEmptyUserList();
 
-        $this->assertEmpty($this->userManager->getAllUsers(UserManager::REMOTE));
+        $this->assertTrue($this->userManager->getAllUsers(UserManager::REMOTE)->isEmpty());
     }
 
     /**
@@ -145,7 +146,7 @@ final class UserManagerTest extends TestCase
         $users = $this->userManager->getUsersWithNameContaining(UserManager::LOCAL, 'DuBuque');
 
         $this->assertCount(1, $users);
-        $this->assertEquals(['id' => 10, 'name' => 'Clementina DuBuque'], $users[0]);
+        $this->assertEquals($this->buildUser(10, 'Clementina DuBuque'), $users->getAtPosition(0));
     }
 
     /**
@@ -156,7 +157,7 @@ final class UserManagerTest extends TestCase
         $users = $this->userManager->getUsersWithNameContaining(UserManager::REMOTE, 'DuBuque');
 
         $this->assertCount(1, $users);
-        $this->assertEquals(['id' => 10, 'name' => 'Clementina DuBuque'], $users[0]);
+        $this->assertEquals($this->buildUser(10, 'Clementina DuBuque'), $users->getAtPosition(0));
     }
 
     /**
@@ -164,7 +165,9 @@ final class UserManagerTest extends TestCase
      */
     public function returns_empty_array_for_no_local_user_containing_text_in_name()
     {
-        $this->assertEmpty($this->userManager->getUsersWithNameContaining(UserManager::LOCAL, 'Any other text'));
+        $userCollection = $this->userManager->getUsersWithNameContaining(UserManager::LOCAL, 'Any other text');
+
+        $this->assertTrue($userCollection->isEmpty());
     }
 
     /**
@@ -172,7 +175,9 @@ final class UserManagerTest extends TestCase
      */
     public function returns_empty_array_for_no_remote_user_containing_text_in_name()
     {
-        $this->assertEmpty($this->userManager->getUsersWithNameContaining(UserManager::REMOTE, 'Any other text'));
+        $userCollection = $this->userManager->getUsersWithNameContaining(UserManager::REMOTE, 'Any other text');
+
+        $this->assertTrue($userCollection->isEmpty());
     }
 
     /**
@@ -259,5 +264,10 @@ final class UserManagerTest extends TestCase
         $reflectionProperty->setValue($this->userManager, __DIR__.'/../res/users_empty');
 
         return $this->userManager;
+    }
+
+    private function buildUser(int $id, string $name): User
+    {
+        return new User($id, $name);
     }
 }

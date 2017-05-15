@@ -2,9 +2,14 @@
 
 namespace Deg540\CleanCodeKata7_8;
 
-interface UserRepository
+abstract class UserRepository
 {
-    public function findAll();
+    public abstract function findAll(): UserCollection;
 
-    public function findOneById(int $id);
+    public abstract function findOneById(int $id): User;
+
+    protected function mapUserData(array $user): User
+    {
+        return new User($user['id'], $user['name']);
+    }
 }

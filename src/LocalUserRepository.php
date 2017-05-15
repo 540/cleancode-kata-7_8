@@ -4,7 +4,7 @@ namespace Deg540\CleanCodeKata7_8;
 
 use Exception;
 
-class LocalUserRepository implements UserRepository
+class LocalUserRepository extends UserRepository
 {
     /** @var string */
     private $fileDir;
@@ -14,16 +14,23 @@ class LocalUserRepository implements UserRepository
         $this->fileDir = $fileDir;
     }
 
-    public function findAll()
+    public function findAll(): UserCollection
     {
         try {
-            return unserialize(file_get_contents($this->fileDir));
+            $users = array_map(
+                function ($user) {
+                    return $this->mapUserData($user);
+                },
+                unserialize(file_get_contents($this->fileDir))
+            );
+
+            return new UserCollection($users);
         } catch (Exception $exception) {
             throw new ServerConnectException();
         }
     }
 
-    public function findOneById(int $id)
+    public function findOneById(int $id): User
     {
         try {
             $user = unserialize(file_get_contents($this->fileDir));
@@ -42,8 +49,6 @@ class LocalUserRepository implements UserRepository
             throw new UserNotFoundException();
         }
 
-        return array_shift($usersForId);
+        return $this->mapUserData(array_shift($usersForId));
     }
-
-
 }

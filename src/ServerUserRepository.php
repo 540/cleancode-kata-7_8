@@ -6,7 +6,7 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 
-class ServerUserRepository implements UserRepository
+class ServerUserRepository extends UserRepository
 {
     /** @var Client */
     private $client;
@@ -16,25 +16,27 @@ class ServerUserRepository implements UserRepository
         $this->client = $client;
     }
 
-    public function findAll()
+    public function findAll(): UserCollection
     {
         try {
             $users = json_decode($this->client->get('/users')->getBody()->getContents(), true);
         } catch (ClientException $exception) {
-            return [];
+            return new UserCollection();
         } catch (Exception $exception) {
             throw new ServerConnectException();
         }
 
-        return array_map(
+        $usersArray =  array_map(
             function ($user) {
                 return $this->mapUserData($user);
             },
             $users
         );
+
+        return new UserCollection($usersArray);
     }
 
-    public function findOneById(int $id)
+    public function findOneById(int $id): User
     {
         try {
             $user = json_decode($this->client->get('/users/'.$id)->getBody()->getContents(), true);
@@ -47,8 +49,4 @@ class ServerUserRepository implements UserRepository
         return $this->mapUserData($user);
     }
 
-    private function mapUserData(array $user): array
-    {
-        return array_intersect_key($user, ['id' => true, 'name' => true]);
-    }
 }
