@@ -65,7 +65,7 @@ final class UserManagerTest extends TestCase
     }
 
     /**
-     * @testç
+     * @test
      */
     public function get_single_user2_remotely()
     {

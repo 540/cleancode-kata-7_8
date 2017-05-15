@@ -23,72 +23,29 @@ class UserManager
 
     public function getUser(string $location, int $id): array
     {
-        if ($location == self::LOCAL) {
-            $user = (new UserStorage())->getLocalUser($this->fileDir, $id);
-
-            if (is_null($user)) {
-                throw new UserNotFoundException();
-            }
-
-            if ($user === false) {
-                throw new ServerConnectException();
-            }
-        } else {
-            $user = (new UserServer())->getServerUser($this->client, $id);
-
-            if ($user == 1) {
-                throw new UserNotFoundException();
-            }
-
-            if ($user == 2) {
-                throw new ServerConnectException();
-            }
-        }
-
-        return $user;
+        return $this->getUserRepository($location)->findOneById($id);
     }
 
     public function getAllUsers(string $location): array
     {
-        if ($location == self::LOCAL) {
-            $users = (new UserStorage())->getLocalUsers($this->fileDir);
-
-            if ($users === false) {
-                throw new ServerConnectException();
-            }
-        } else {
-            $users = (new UserServer())->getServerUsers($this->client);
-
-            if ($users == 1) {
-                return [];
-            }
-
-            if ($users == 2) {
-                throw new ServerConnectException();
-            }
-        }
-
-        return $users;
+        return $this->getUserRepository($location)->findAll();
     }
 
     public function getUsersWithNameContaining(string $location, string $text): array
     {
         $users = $this->getAllUsers($location);
 
-        if ($users == null) {
-            return [];
-        }
-
-        return $this->filterUsersNameContaining($text, $users);
+        return $this->filterUsersNameContaining($users, $text);
     }
 
     /**
-     * @param string $text
      * @param array  $users
+     *
+     * @param string $text
      *
      * @return array
      */
-    private function filterUsersNameContaining(string $text, $users): array
+    private function filterUsersNameContaining($users, string $text): array
     {
         return array_values(
             array_filter(
@@ -98,5 +55,19 @@ class UserManager
                 }
             )
         );
+    }
+
+    /**
+     * @param string $location
+     *
+     * @return LocalUserRepository|ServerUserRepository
+     */
+    private function getUserRepository(string $location)
+    {
+        if ($location == self::LOCAL) {
+            return new LocalUserRepository($this->fileDir);
+        } else {
+            return new ServerUserRepository($this->client);
+        }
     }
 }
